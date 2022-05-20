@@ -69,7 +69,7 @@ class CelebA(data.Dataset):
 
 
 def get_loader(image_dir, attr_path, selected_attrs, crop_size=178, image_size=128, 
-               batch_size=16, dataset='CelebA', mode='train', num_workers=1):
+               batch_size=16, dataset='CelebA', mode='train', num_workers=1, filter_list=[]):
     """Build and return a data loader."""
     transform = []
     if mode == 'train':
@@ -79,14 +79,21 @@ def get_loader(image_dir, attr_path, selected_attrs, crop_size=178, image_size=1
     transform.append(T.ToTensor())
     transform.append(T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
     transform = T.Compose(transform)
-
+    def check_valid(path, filter_list=filter_list):
+        return os.path.basename(path) not in filter_list
     if dataset == 'CelebA':
         dataset = CelebA(image_dir, attr_path, selected_attrs, transform, mode)
     elif dataset == 'RaFD':
-        dataset = ImageFolder(image_dir, transform)
+        dataset = ImageFolder(image_dir, transform, is_valid_file=check_valid)
 
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   shuffle=(mode=='train'),
                                   num_workers=num_workers)
     return data_loader
+
+if __name__ == '__main__':
+    loader = get_loader('./data/RaFD/train', '', ['a', 'b'], dataset='RaFD')
+    loader = iter(loader)
+    img, label = next(loader)
+    print(img.shape)

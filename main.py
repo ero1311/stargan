@@ -1,8 +1,12 @@
 import os
 import argparse
+import numpy as np
+
+from numpy import imag
 from solver import Solver
 from data_loader import get_loader
 from torch.backends import cudnn
+from os.path import exists, join, basename
 
 
 def str2bool(v):
@@ -13,19 +17,26 @@ def main(config):
     cudnn.benchmark = True
 
     # Create directories if not exist.
-    if not os.path.exists(config.log_dir):
-        os.makedirs(config.log_dir)
-    if not os.path.exists(config.model_save_dir):
-        os.makedirs(config.model_save_dir)
-    if not os.path.exists(config.sample_dir):
-        os.makedirs(config.sample_dir)
-    if not os.path.exists(config.result_dir):
-        os.makedirs(config.result_dir)
+    log_dir = '{}_{}_{}_{}'.format(config.log_base, config.expression, config.sex, config.percentage)
+    if not exists(join(log_dir, 'logs')):
+        os.makedirs(join(log_dir, 'logs'))
+    if not exists(join(log_dir, 'models')):
+        os.makedirs(join(log_dir, 'models'))
+    if not exists(join(log_dir, 'samples')):
+        os.makedirs(join(log_dir, 'samples'))
+    if not exists(join(log_dir, 'results')):
+        os.makedirs(join(log_dir, 'results'))
 
     # Data loader.
     celeba_loader = None
     rafd_loader = None
 
+    image_names = os.listdir(join(config.rafd_image_dir, config.expression))
+    image_names = [image_name for image_name in image_names if image_name.find(config.sex) != -1]
+    filter_list = np.random.choice(image_names, size=int((100 - config.percentage) * len(image_names) / 100), replace=False)
+    filter_list = list(filter_list)
+    print(filter_list)
+    
     if config.dataset in ['CelebA', 'Both']:
         celeba_loader = get_loader(config.celeba_image_dir, config.attr_path, config.selected_attrs,
                                    config.celeba_crop_size, config.image_size, config.batch_size,
@@ -33,7 +44,7 @@ def main(config):
     if config.dataset in ['RaFD', 'Both']:
         rafd_loader = get_loader(config.rafd_image_dir, None, None,
                                  config.rafd_crop_size, config.image_size, config.batch_size,
-                                 'RaFD', config.mode, config.num_workers)
+                                 'RaFD', config.mode, config.num_workers, filter_list)
     
 
     # Solver for training and testing StarGAN.
@@ -94,10 +105,10 @@ if __name__ == '__main__':
     parser.add_argument('--celeba_image_dir', type=str, default='data/celeba/images')
     parser.add_argument('--attr_path', type=str, default='data/celeba/list_attr_celeba.txt')
     parser.add_argument('--rafd_image_dir', type=str, default='data/RaFD/train')
-    parser.add_argument('--log_dir', type=str, default='stargan/logs')
-    parser.add_argument('--model_save_dir', type=str, default='stargan/models')
-    parser.add_argument('--sample_dir', type=str, default='stargan/samples')
-    parser.add_argument('--result_dir', type=str, default='stargan/results')
+    parser.add_argument('--log_base', type=str, default='stargan')
+    parser.add_argument('--sex', type=str, default='female')
+    parser.add_argument('--expression', type=str, default='angry')
+    parser.add_argument('--percentage', type=int, default=100)
 
     # Step size.
     parser.add_argument('--log_step', type=int, default=10)

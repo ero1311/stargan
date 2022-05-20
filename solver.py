@@ -2,6 +2,7 @@ from model import Generator
 from model import Discriminator
 from torch.autograd import Variable
 from torchvision.utils import save_image
+from os.path import join
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -53,10 +54,11 @@ class Solver(object):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # Directories.
-        self.log_dir = config.log_dir
-        self.sample_dir = config.sample_dir
-        self.model_save_dir = config.model_save_dir
-        self.result_dir = config.result_dir
+        log_dir = '{}_{}_{}_{}'.format(config.log_base, config.expression, config.sex, config.percentage)
+        self.log_dir = join(log_dir, 'logs')
+        self.sample_dir = join(log_dir, 'samples')
+        self.model_save_dir = join(log_dir, 'models')
+        self.result_dir = join(log_dir, 'results')
 
         # Step size.
         self.log_step = config.log_step
