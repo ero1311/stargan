@@ -17,7 +17,10 @@ def main(config):
     cudnn.benchmark = True
 
     # Create directories if not exist.
-    log_dir = '{}_{}_{}_{}'.format(config.log_base, config.expression, config.sex, config.percentage)
+    if config.train_base:
+        log_dir = config.log_base
+    else:
+        log_dir = '{}_{}_{}_{}'.format(config.log_base, config.expression, config.sex, config.percentage)
     if not exists(join(log_dir, 'logs')):
         os.makedirs(join(log_dir, 'logs'))
     if not exists(join(log_dir, 'models')):
@@ -30,13 +33,14 @@ def main(config):
     # Data loader.
     celeba_loader = None
     rafd_loader = None
-
-    image_names = os.listdir(join(config.rafd_image_dir, config.expression))
-    image_names = [image_name for image_name in image_names if image_name.find(config.sex) != -1]
-    filter_list = np.random.choice(image_names, size=int((100 - config.percentage) * len(image_names) / 100), replace=False)
-    filter_list = list(filter_list)
+    filter_list = []
+    if not config.train_base:
+        image_names = os.listdir(join(config.rafd_image_dir, config.expression))
+        image_names = [image_name for image_name in image_names if image_name.find(config.sex) != -1]
+        filter_list = np.random.choice(image_names, size=int((100 - config.percentage) * len(image_names) / 100), replace=False)
+        filter_list = list(filter_list)
     print(filter_list)
-    
+
     if config.dataset in ['CelebA', 'Both']:
         celeba_loader = get_loader(config.celeba_image_dir, config.attr_path, config.selected_attrs,
                                    config.celeba_crop_size, config.image_size, config.batch_size,
@@ -106,6 +110,7 @@ if __name__ == '__main__':
     parser.add_argument('--attr_path', type=str, default='data/celeba/list_attr_celeba.txt')
     parser.add_argument('--rafd_image_dir', type=str, default='data/RaFD/train')
     parser.add_argument('--log_base', type=str, default='stargan')
+    parser.add_argument('--train_base', action='store_true')
     parser.add_argument('--sex', type=str, default='female')
     parser.add_argument('--expression', type=str, default='angry')
     parser.add_argument('--percentage', type=int, default=100)

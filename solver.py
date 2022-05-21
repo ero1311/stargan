@@ -2,7 +2,7 @@ from model import Generator
 from model import Discriminator
 from torch.autograd import Variable
 from torchvision.utils import save_image
-from os.path import join
+from os.path import join, basename
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -54,7 +54,10 @@ class Solver(object):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # Directories.
-        log_dir = '{}_{}_{}_{}'.format(config.log_base, config.expression, config.sex, config.percentage)
+        if config.train_base:
+            log_dir = config.log_base
+        else:
+            log_dir = '{}_{}_{}_{}'.format(config.log_base, config.expression, config.sex, config.percentage)
         self.log_dir = join(log_dir, 'logs')
         self.sample_dir = join(log_dir, 'samples')
         self.model_save_dir = join(log_dir, 'models')
@@ -532,7 +535,7 @@ class Solver(object):
             data_loader = self.celeba_loader
         elif self.dataset == 'RaFD':
             data_loader = self.rafd_loader
-        
+        img_lst = data_loader.dataset.imgs
         with torch.no_grad():
             for i, (x_real, c_org) in enumerate(data_loader):
 
@@ -547,8 +550,9 @@ class Solver(object):
 
                 # Save the translated images.
                 x_concat = torch.cat(x_fake_list, dim=3)
-                result_path = os.path.join(self.result_dir, '{}-images.jpg'.format(i+1))
-                save_image(self.denorm(x_concat.data.cpu()), result_path, nrow=1, padding=0)
+                for img_ind in range(self.batch_size):
+                    result_path = os.path.join(self.result_dir, basename(img_lst[i * self.batch_size + img_ind][0]))
+                    save_image(self.denorm(x_concat[0].data.cpu()), result_path, nrow=1, padding=0)
                 print('Saved real and fake images into {}...'.format(result_path))
 
     def test_multi(self):
