@@ -550,10 +550,10 @@ class Solver(object):
 
                 # Save the translated images.
                 x_concat = torch.cat(x_fake_list, dim=3)
-                for img_ind in range(self.batch_size):
+                for img_ind in range(x_concat.shape[0]):
                     result_path = os.path.join(self.result_dir, basename(img_lst[i * self.batch_size + img_ind][0]))
                     save_image(self.denorm(x_concat[0].data.cpu()), result_path, nrow=1, padding=0)
-                print('Saved real and fake images into {}...'.format(result_path))
+                    print('Saved real and fake images into {}...'.format(result_path))
 
     def test_multi(self):
         """Translate images using StarGAN trained on multiple datasets."""
