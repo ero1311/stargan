@@ -34,12 +34,12 @@ def main(config):
     celeba_loader = None
     rafd_loader = None
     filter_list = []
-    if not config.train_base:
+    if (not config.train_base) and config.mode == 'train':
         image_names = os.listdir(join(config.rafd_image_dir, config.expression))
         image_names = [image_name for image_name in image_names if image_name.find(config.sex) != -1]
         filter_list = np.random.choice(image_names, size=int((100 - config.percentage) * len(image_names) / 100), replace=False)
         filter_list = list(filter_list)
-    print(filter_list)
+    print("FILTER LIST: ", filter_list)
 
     if config.dataset in ['CelebA', 'Both']:
         celeba_loader = get_loader(config.celeba_image_dir, config.attr_path, config.selected_attrs,
